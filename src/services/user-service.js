@@ -46,17 +46,18 @@ async function signin(data) {
 async function isAuthenticated(token) {
   try {
     if(!token) {
-      throw new AppError('Missing JWR token', StatusCodes.BAD_REQUEST);
+      throw new AppError('Missing JWT token', StatusCodes.BAD_REQUEST);
     }
 
     const response = Auth.verifyToken(token);
-    const user = await UserRepository.get(response.id);
+    const user = await userRepository.get(response.id);
     if(!user) {
       throw new AppError('No user found', StatusCodes.BAD_REQUEST);
     }
     return user.id;
  
   } catch(error) {
+    console.log(error, "ERROR AT SERVICE");
     if(error instanceof AppError) throw error;
 
     if(error.name === "JsonWebTokenError") {
@@ -70,8 +71,49 @@ async function isAuthenticated(token) {
   }
 }
 
+async function addRoleToUser(data) {
+  try {
+    const user = await userRepository.get(data.id);
+    if(!user) {
+      throw new AppError('No user found', StatusCodes.NOT_FOUND);
+    }
+    const role = await roleRepository.getRoleByName(data.role);
+    if(!role) {
+      throw new AppError('No role found', StatusCodes.NOT_FOUND);
+    }
+    user.addRole(role);
+    return user;
+
+  } catch(error) {
+    console.log(error);
+    if(error instanceof AppError) throw error;
+    throw new AppError('Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+}
+
+async function isAdmin(id) {
+  try {
+    const user = await userRepository.get(id);
+    if(!user) {
+      throw new AppError('No user found', StatusCodes.NOT_FOUND);
+    }
+    const adminRole = await roleRepository.getRoleByName(Enums.USER_ROLES_ENUMS.ADMIN);
+    if(!adminRole) {
+      throw new AppError('No admin role found', StatusCodes.NOT_FOUND);
+    }
+    return user.hasRole(adminRole);
+  } catch(error) {
+    console.log(error);
+    if(error instanceof AppError) throw error;
+    throw new AppError('Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+
+}
+
 module.exports = {
   create,
   signin,
-  isAuthenticated
+  isAuthenticated,
+  addRoleToUser,
+  isAdmin
 }

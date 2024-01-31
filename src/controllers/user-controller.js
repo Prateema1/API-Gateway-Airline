@@ -52,7 +52,33 @@ async function signIn(req, res) {
   }
 }
 
+/**
+ * POST: /role
+ * req-body {role: 'admin', id: 2}
+ */
+
+async function addRoleToUser(req, res) {
+  try {
+    console.log("REACHED CONTROLLER")
+   const user = await UserService.addRoleToUser({
+      role: req.body.role,
+      id: req.body.id
+   });
+   SuccessResponse.data = user;
+   return res
+     .status(StatusCodes.CREATED)
+     .json(SuccessResponse);
+  } catch (error) {
+      ErrorResponse.error = error;
+      return res
+              .status(error.statusCode)
+              .json(ErrorResponse)
+
+  }
+}
+
 module.exports = {
   signUp,
-  signIn
+  signIn,
+  addRoleToUser
 }
